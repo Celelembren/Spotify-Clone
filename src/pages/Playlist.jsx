@@ -1,6 +1,7 @@
 import { Avatar, Box, Skeleton, Typography } from "@mui/material"
 import { useEffect, useState, useCallback } from "react";
 import { useParams } from "react-router-dom"
+import SongTable from "../components/SongTable/SongTable";
 
 
 const Playlist = ({ spotifyApi, token }) => {
@@ -11,7 +12,6 @@ const Playlist = ({ spotifyApi, token }) => {
 
     const formatSongs = useCallback(
         (items) => items.map((item, i) => {
-            console.log({ item, i });
             const {track} = item;
             track.contextUri = `spotify:playlist:${id}`;
             track.position = i;
@@ -43,7 +43,7 @@ const Playlist = ({ spotifyApi, token }) => {
         getData().finally(() => {
             setStatus({ isLoading: false, isError: null }); 
         });
-    }, [id, formatSongs]);
+    }, [id, formatSongs, spotifyApi, token]);
 
     return (
     <Box id="Playlist__page" sx={{ backgroundColor: 'background.paper', flex: 1, overflowY: 'auto'}}>
@@ -77,6 +77,7 @@ const Playlist = ({ spotifyApi, token }) => {
                 )}
             </Box>
         </Box>
+        <SongTable songs={songs} loading={status.isLoading} spotifyApi={spotifyApi} />
     </Box>
     )
 }
