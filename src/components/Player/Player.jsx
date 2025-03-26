@@ -1,18 +1,128 @@
 import { Box, Grid, Typography, Avatar } from '@mui/material';
+import { useEffect, useState } from 'react';
+import PlayerControls from '../PlayerControls/PlayerControls';
 
-const Player = ({ spotifyApi }) => {
+const Player = ({ spotifyApi, token }) => {
+	const [locaPlayer, setLocalPlayer] = useState();
+	const [is_paused, setIsPaused] = useState(false);
+	const [current_track, setCurrentTrack] = useState();
+	const [device, setDevice] = useState();
+	const [duration, setDuration] = useState();
+	const [progress, setProgress] = useState();
+	const [active, setActive] = useState();
+
+	useEffect(() => {
+		const script = document.createElement('script');
+		script.src = 'https://sdk.scdn.co/spotify-player.js';
+		script.async = true;
+
+		document.body.appendChild(script);
+
+		window.onSpotifyWebPlaybackSDKReady = () => {
+			const player = new window.Spotify.Player({
+				name: 'Calles Player1',
+				getOAuthToken: (cb) => {
+					cb(token);
+				},
+				volume: 0.5
+			});
+
+			player.addListener('ready', ({ device_id }) => {
+				console.log('Ready with Device ID', device_id);
+				setDevice(device_id);
+				setLocalPlayer(player);
+			});
+
+			player.addListener('not_ready', ({ device_id }) => {
+				console.log('Device ID has gone offline', device_id);
+			});
+
+			player.addListener('player_state_changed', (state) => {
+				if (!state || !state.track_window?.current_track) {
+					return;
+				}
+				// console.log(state)
+
+				const duration = state.track_window.current_track.duration_ms / 1000;
+				const progress = state.position / 1000;
+				setDuration(duration);
+				setProgress(progress);
+				setIsPaused(state.paused);
+				setCurrentTrack(state.track_window.current_track);
+
+				player.getCurrentState().then((state) => {
+					!state ? setActive(false) : setActive(true);
+				});
+			});
+
+			player.connect();
+		};
+	}, []);
+
+	useEffect(() => {
+		if (!locaPlayer) return;
+		async function connect() {
+			await locaPlayer.connect();
+		}
+
+		connect();
+		return () => {
+			locaPlayer.disconnect();
+		};
+	}, [locaPlayer]);
+
+	// useEffect (() => {
+	//     const transferPlayback = async () => {
+	//         if(device) {
+	//             const res = await spotifyApi.getMyDevices();
+	//             // console.log(res);
+	//             await spotifyApi.transferMyPlayback([device], false);
+	//         }
+	//     };
+
+	//     transferPlayback();
+	// }, [device, spotifyApi])
+
 	return (
 		<Box>
-			<Grid container>
-				<Grid xs={12} md={4} items sx={{display: 'flex', alignItems: 'center', justifyContent: 'flex-start'}}> 
-					Bild, title, Artist
+			<Grid
+				container
+				px={3}
+				sx={{
+					bgcolor: 'background.paper',
+					height: 100,
+					cursor: { xs: 'pointer', md: 'auto' },
+					width: '100%',
+					borderTop: '1px solid #292929'
+				}}
+			>
+				<Grid item xs={12} md={4} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }}>
+					<Avatar
+						src={current_track?.album.images[0].url}
+						alt={current_track?.album.name}
+						variant="square"
+						sx={{
+							width: 56,
+							height: 56,
+							marginRight: 2
+						}}
+					/>
+					<Box>
+						<Typography sx={{ color: 'text.primary', fontSize: 14 }}>{current_track?.name}</Typography>
+						<Typography sx={{ color: 'text.secondary', fontSize: 10 }}>
+							{current_track?.artists[0].name}
+						</Typography>
+					</Box>
 				</Grid>
-				<Grid sx={{ display: {xs: 'none', md: 'flex'}, justifyContent: 'center', alignItems: 'center' }} 
-                md={4} 
-                items>
-					Play Knappen
+				<Grid
+					item
+					sx={{ display: { xs: 'none', md: 'flex' }, justifyContent: 'center', alignItems: 'center' }}
+					md={4}
+				>
+                    {active ? <PlayerControls progress={progress} is_paused={is_paused} duration={duration} player={locaPlayer} /> : <Box>Please transfer Playback</Box>}
+					
 				</Grid>
-				<Grid xs={6} md={4} items sx={{display: 'flex', alignItems: 'center', justifyContent: 'flex-end'}}>
+				<Grid item xs={6} md={4} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
 					Volume
 				</Grid>
 			</Grid>

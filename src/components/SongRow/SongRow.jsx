@@ -2,7 +2,7 @@ import { Avatar, Box, Grid, Typography, Skeleton } from '@mui/material';
 import { formatTime } from '../../utils/formatTime';
 import spotifyWebApi from 'spotify-web-api-node';
 
-const SongRow = ({ images, title, artist, album, duration, index, loading, position, contextUri, spotifyApi }) => {
+const SongRow = ({ images, title, artist, album, duration, i, loading, position, contextUri, spotifyApi }) => {
 	const image = images?.length > 0 ? images[0].url : null;
 
 const onRowClick = async () => {
@@ -25,7 +25,7 @@ const onRowClick = async () => {
 			}}
 		>
 			<Grid item sx={{ width: 35, display: 'flex', alignItems: 'center', fontSize: 16 }}>
-				{index + 1}
+				{i + 1}
 			</Grid>
 			<Grid item sx={{ flex: 1, display: 'flex', alignItems: 'center', gap: 2 }}>
 				{loading ? (
