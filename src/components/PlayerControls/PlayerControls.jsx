@@ -4,22 +4,23 @@ import { PlayArrow, SkipNext, SkipPrevious, Pause } from '@mui/icons-material';
 import { useEffect, useState } from 'react';
 
 const PlayerControls = ({ is_paused, duration, progress, player }) => {
-	const [currentProgress, setCurrentProgress] = useState(progress);
+	const [currentProgress, setCurrentProgress] = useState(progress ?? 0);
 	const skipStyle = { width: 28, height: 28 };
 	const PlayStyle = { width: 38, height: 38 };
 
 	useEffect(() => {
 		const intervalID = setInterval(() => {
-			if(!is_paused && player) {
+			if (!is_paused && player) {
 				setCurrentProgress((prevState) => prevState + 1);
-			} 
+			}
 		}, 1000);
 		return () => clearInterval(intervalID);
 	}, [is_paused, player]);
 
-
 	useEffect(() => {
-		setCurrentProgress(progress);
+			if (progress !== undefined) {
+				setCurrentProgress(progress);
+			}
 	}, [progress]);
 
 	return (
@@ -56,17 +57,18 @@ const PlayerControls = ({ is_paused, duration, progress, player }) => {
 				</IconButton>
 			</Stack>
 			<Stack spacing={2} direction="row" justifyContent={'center'} alignItems={'center'} sx={{ width: '75%' }}>
-				<Typography sx={{ color: 'text.secondary', fontSize: 12 }}>{formatTime(currentProgress)}</Typography>
+				<Typography sx={{ color: 'text.secondary', fontSize: 12 }}>
+					{formatTime(currentProgress)}
+				</Typography>
 				<Slider
 					max={duration}
 					value={currentProgress}
 					min={0}
 					size="medium"
-					onChange={(event, value) => {
-						console.log('Changed', value);
+					onChange={(e, value) => {
 						setCurrentProgress(value);
 					}}
-					onChangeCommitted={(event, value) => {
+					onChangeCommitted={(e, value) => {
 						player.seek(value * 1000);
 					}}
 				/>

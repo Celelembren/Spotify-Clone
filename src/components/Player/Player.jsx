@@ -1,6 +1,8 @@
 import { Box, Grid, Typography, Avatar } from '@mui/material';
 import { useEffect, useState } from 'react';
 import PlayerControls from '../PlayerControls/PlayerControls';
+import PlayerVolume from '../PlayerVolume/PlayerVolume';
+import PlayerOverlay from '../PlayerOverlay/PlayerOverlay';
 
 const Player = ({ spotifyApi, token }) => {
 	const [locaPlayer, setLocalPlayer] = useState();
@@ -10,6 +12,7 @@ const Player = ({ spotifyApi, token }) => {
 	const [duration, setDuration] = useState();
 	const [progress, setProgress] = useState();
 	const [active, setActive] = useState();
+	const [playerOverlayIsOpen, setplayerOverlayIsOpen] = useState(false);
 
 	useEffect(() => {
 		const script = document.createElement('script');
@@ -27,21 +30,19 @@ const Player = ({ spotifyApi, token }) => {
 				volume: 0.5
 			});
 
-			player.addListener('ready', ({ device_id }) => {
-				console.log('Ready with Device ID', device_id);
+			player.addListener('ready', ({ device_id }) => {				
 				setDevice(device_id);
 				setLocalPlayer(player);
 			});
 
-			player.addListener('not_ready', ({ device_id }) => {
-				console.log('Device ID has gone offline', device_id);
+			player.addListener('not_ready', ({ device_id }) => {				
 			});
 
 			player.addListener('player_state_changed', (state) => {
 				if (!state || !state.track_window?.current_track) {
 					return;
 				}
-				// console.log(state)
+				
 
 				const duration = state.track_window.current_track.duration_ms / 1000;
 				const progress = state.position / 1000;
@@ -71,21 +72,21 @@ const Player = ({ spotifyApi, token }) => {
 		};
 	}, [locaPlayer]);
 
-	// useEffect (() => {
-	//     const transferPlayback = async () => {
-	//         if(device) {
-	//             const res = await spotifyApi.getMyDevices();
-	//             // console.log(res);
-	//             await spotifyApi.transferMyPlayback([device], false);
-	//         }
-	//     };
+	 useEffect (() => {
+	     const transferPlayback = async () => {
+	         if(device) {
+	             const res = await spotifyApi.getMyDevices();	             
+	     };
+	             await spotifyApi.transferMyPlayback([device], false);
+	         }
 
-	//     transferPlayback();
-	// }, [device, spotifyApi])
+	    transferPlayback();
+	 }, [device, spotifyApi])
 
 	return (
 		<Box>
 			<Grid
+				onClick={() => setplayerOverlayIsOpen((prevState) => !prevState)}
 				container
 				px={3}
 				sx={{
@@ -119,13 +120,36 @@ const Player = ({ spotifyApi, token }) => {
 					sx={{ display: { xs: 'none', md: 'flex' }, justifyContent: 'center', alignItems: 'center' }}
 					md={4}
 				>
-                    {active ? <PlayerControls progress={progress} is_paused={is_paused} duration={duration} player={locaPlayer} /> : <Box>Please transfer Playback</Box>}
-					
+					{active ? (
+						<PlayerControls
+							progress={progress}
+							is_paused={is_paused}
+							duration={duration}
+							player={locaPlayer}
+						/>
+					) : (
+						<Box>Please transfer Playback</Box>
+					)}
 				</Grid>
-				<Grid item xs={6} md={4} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
-					Volume
+				<Grid
+					item
+					xs={6}
+					md={4}
+					sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center', justifyContent: 'flex-end' }}
+				>
+					<PlayerVolume player={locaPlayer} />
 				</Grid>
 			</Grid>
+			<PlayerOverlay
+				playerOverlayIsOpen={playerOverlayIsOpen}
+				closeOverlay={() => setplayerOverlayIsOpen(false)}
+				progress={progress}
+				is_paused={is_paused}
+				duration={duration}
+				player={locaPlayer}
+				current_track={current_track}
+				active={active}
+			/>
 		</Box>
 	);
 };

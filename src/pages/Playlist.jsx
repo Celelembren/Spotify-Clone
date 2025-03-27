@@ -29,7 +29,6 @@ const Playlist = ({ spotifyApi, token }) => {
                 image: playlistDetails.body.images[1]?.url || playlistDetails.body.images[0]?.url,
                 name: playlistDetails.body.name
             });
-            console.log(playlistDetails);
             const { items } = playlistDetails.body.tracks;
             // Format songs
             const formattedSongs = formatSongs(items);
